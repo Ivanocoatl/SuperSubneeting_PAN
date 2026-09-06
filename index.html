@@ -3,219 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Subredes: Dashboard 16:9</title>
+    <title>Calculadora de Subredes: Dashboard 16:9 MAX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700;900&display=swap');
 
-        /* Escalado de fuente global dinámico */
-        :root { --app-font-size: 18px; }
-        html { font-size: var(--app-font-size); transition: font-size 0.1s ease; }
+        :root { --app-font-size: 19px; }
+        html { font-size: var(--app-font-size); transition: font-size 0.15s ease; }
         
         body { font-family: 'Space Mono', monospace; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .pixel-font { font-family: 'Press Start 2P', cursive; }
 
-        /* Cajas de Bits Optimizadas para Monitor */
-        .bit-box { display: inline-flex; justify-content: center; align-items: center; width: 1.8rem; height: 2.2rem; margin: 0.1rem; border-radius: 0.25rem; font-weight: bold; font-size: 0.9rem; transition: all 0.2s ease; user-select: none; position: relative; }
+        /* OCTETOS Y BITS FLUIDOS (Se adaptan al 100% del espacio) */
+        .binary-row { display: flex; width: 100%; gap: 0.75rem; align-items: stretch; margin-bottom: 0.5rem; }
+        .octet-wrapper { flex: 1; display: flex; flex-direction: column; align-items: stretch; min-w-0; }
+        .octet-group { display: flex; width: 100%; padding: 0.35rem; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 0.5rem; box-shadow: inset 0 2px 10px rgba(0,0,0,0.2); }
         
-        .switch-on { background-color: #3b82f6; color: white; border: 1px solid #60a5fa; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 8px rgba(59, 130, 246, 0.6); border-bottom: 3px solid #1d4ed8; transform: translateY(-1px); }
-        .switch-off { background-color: #1e293b; color: #475569; border: 1px solid #334155; box-shadow: inset 0 3px 5px rgba(0,0,0,0.5); border-bottom: 1px solid #0f172a; transform: translateY(1px); }
+        /* Cajas individuales */
+        .bit-box { 
+            flex: 1; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 3.4rem; 
+            border-radius: 0.3rem; 
+            font-weight: 900; font-size: 1.5rem; 
+            transition: all 0.2s ease; user-select: none; position: relative; 
+        }
+        
+        /* Cabeceras alineadas matemáticamente */
+        .bit-headers { display: flex; width: 100%; padding: 0 0.35rem; gap: 4px; margin-bottom: 4px; }
+        .bit-headers span { flex: 1; text-align: center; font-size: 0.75rem; font-weight: 900; color: #94a3b8; }
+
+        .switch-on { background-color: #3b82f6; color: white; border: 1px solid #60a5fa; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 15px rgba(59, 130, 246, 0.8); border-bottom: 4px solid #1d4ed8; transform: translateY(-2px); }
+        .switch-off { background-color: #1e293b; color: #475569; border: 1px solid #334155; box-shadow: inset 0 3px 5px rgba(0,0,0,0.5); border-bottom: 2px solid #0f172a; transform: translateY(1px); }
         .interactive-bit { cursor: pointer; }
         .interactive-bit:hover { filter: brightness(1.2); }
-        .interactive-bit:active { transform: translateY(2px); border-bottom-width: 1px; }
+        .interactive-bit:active { transform: translateY(3px); border-bottom-width: 1px; }
 
-        .bit-mask-1 { background-color: #10b981; color: white; border: 1px solid #059669; }
-        .bit-mask-0 { background-color: #ef4444; color: white; border: 1px solid #dc2626; }
-        .bit-result-net { background-color: #8b5cf6; color: white; border: 1px solid #7c3aed; box-shadow: 0 0 8px #8b5cf6; }
-        .bit-result-host { background-color: #475569; color: #94a3b8; border: 1px solid #334155; }
+        .bit-mask-1 { background-color: #10b981; color: white; border: 1px solid #059669; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2); border-bottom: 3px solid #047857; }
+        .bit-mask-0 { background-color: #ef4444; color: white; border: 1px solid #dc2626; box-shadow: inset 0 2px 4px rgba(255,255,255,0.2); border-bottom: 3px solid #b91c1c; }
+        .bit-result-net { background-color: #8b5cf6; color: white; border: 1px solid #7c3aed; box-shadow: 0 0 12px #8b5cf6; border-bottom: 3px solid #6d28d9; }
+        .bit-result-host { background-color: #475569; color: #94a3b8; border: 1px solid #334155; border-bottom: 2px solid #1e293b; }
         .bit-unknown { background-color: #1e293b; color: #64748b; border: 1px dashed #334155; }
 
-        /* Contenedores de Binarios para que no colapsen en Monitor */
-        .octet-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .bit-headers { display: flex; width: 100%; justify-content: space-around; font-size: 0.5rem; color: #94a3b8; margin-bottom: 2px; font-weight: bold; }
-        .octet-group { display: flex; flex-wrap: nowrap; padding: 0.2rem; background: rgba(255,255,255,0.03); border-radius: 0.4rem; justify-content: center; }
-        .binary-row { display: flex; flex-wrap: nowrap; justify-content: space-between; gap: 0.5rem; width: 100%; margin-bottom: 0.5rem; }
-
-        @keyframes dropFilter { 0% { transform: translateY(-30px) scale(1.05); opacity: 0; filter: brightness(2); } 70% { transform: translateY(5px) scale(0.95); opacity: 1; filter: brightness(1); } 100% { transform: translateY(0) scale(1); opacity: 1; filter: brightness(1); } }
+        @keyframes dropFilter { 0% { transform: translateY(-20px) scale(1.02); opacity: 0; filter: brightness(1.5); } 100% { transform: translateY(0) scale(1); opacity: 1; filter: brightness(1); } }
         
-        /* Controles Deslizables Customizados */
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; height: 1.5rem; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 1.2rem; width: 1.2rem; border-radius: 50%; background: #10b981; cursor: pointer; margin-top: -0.4rem; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); border: 2px solid #fff; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 0.4rem; cursor: pointer; background: #334155; border-radius: 0.2rem; }
-        
-        /* Slider de Zoom especial */
-        #font-zoom::-webkit-slider-thumb { background: #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.6); }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; height: 2rem; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 1.6rem; width: 1.6rem; border-radius: 50%; background: #10b981; cursor: pointer; margin-top: -0.6rem; box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); border: 2px solid #fff; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 0.5rem; cursor: pointer; background: #334155; border-radius: 0.25rem; }
+        #font-zoom::-webkit-slider-thumb { background: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.8); }
 
         .glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); }
-        .ip-input { width: 3.8rem; background: transparent; border-bottom: 2px solid #3b82f6; text-align: center; color: #93c5fd; font-weight: bold; font-size: 1.2rem; }
-        .ip-input:focus { outline: none; border-color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
         
-        .ip-input-dest { border-bottom: 2px solid #f97316; color: #fdba74; }
+        /* Inputs compactos pero muy visibles */
+        .ip-input { width: 100%; max-width: 4rem; background: transparent; border-bottom: 3px solid #3b82f6; text-align: center; color: #93c5fd; font-weight: 900; font-size: 1.6rem; padding-bottom: 4px; }
+        .ip-input:focus { outline: none; border-color: #60a5fa; background: rgba(59, 130, 246, 0.1); border-radius: 4px; }
+        .ip-input-dest { border-bottom: 3px solid #f97316; color: #fdba74; }
         .ip-input-dest:focus { border-color: #fb923c; background: rgba(249, 115, 22, 0.1); }
 
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .highlight-octet { background-color: rgba(234, 179, 8, 0.2); color: #fde047; font-weight: bold; padding: 0 4px; border-radius: 4px; border: 1px solid rgba(234, 179, 8, 0.5); }
         
-        /* Ocultar barra scroll estorbosa en el panel de subredes */
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; border: 1px solid #1e293b; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col h-screen overflow-hidden">
 
 <!-- PANTALLA DE INICIO -->
 <div id="start-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 px-4 text-center">
-    <div class="mb-8 relative">
+    <div class="mb-10 relative">
         <div class="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full"></div>
-        <h1 class="text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 pixel-font leading-relaxed relative z-10">EL FILTRO MÁGICO<br><span class="text-xl sm:text-3xl text-slate-300">DASHBOARD</span></h1>
+        <h1 class="text-4xl sm:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 pixel-font leading-relaxed relative z-10">EL FILTRO MÁGICO<br><span class="text-2xl sm:text-4xl text-slate-300">DASHBOARD MAX</span></h1>
     </div>
-    <button id="btn-start" class="pixel-font bg-blue-600 hover:bg-blue-500 text-white py-4 px-10 rounded-xl text-xl shadow-[0_0_20px_rgba(59,130,246,0.6)] active:scale-95 transition-all border-b-4 border-blue-800">ARRANCAR SIMULADOR</button>
+    <button id="btn-start" class="pixel-font bg-blue-600 hover:bg-blue-500 text-white py-5 px-12 rounded-xl text-2xl shadow-[0_0_25px_rgba(59,130,246,0.6)] active:scale-95 transition-all border-b-4 border-blue-800">ARRANCAR SIMULADOR</button>
 </div>
 
-<!-- CONTENEDOR PRINCIPAL DASHBOARD 16:9 -->
-<main class="flex-grow p-4 w-full max-w-[1900px] mx-auto hidden flex-col h-screen" id="main-app">
+<!-- CONTENEDOR PRINCIPAL DASHBOARD -->
+<main class="flex-grow p-4 w-full max-w-[2400px] mx-auto hidden flex-col h-full" id="main-app">
     
-    <!-- HEADER Y CONTROLES GLOBALES -->
-    <header class="flex justify-between items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-4 shrink-0 shadow-lg">
-        <div class="flex items-center gap-4">
-            <h2 class="text-xl text-blue-400 pixel-font">LAN/WAN SIMULATOR</h2>
-            <select id="class-selector" class="bg-slate-900 border border-slate-600 text-yellow-400 font-bold text-sm rounded-lg focus:ring-blue-500 block px-4 py-2 cursor-pointer outline-none">
+    <!-- HEADER REORGANIZADO Y OPTIMIZADO -->
+    <header class="flex justify-between items-stretch bg-slate-800/60 p-3 lg:p-4 rounded-xl border border-slate-700 mb-4 shrink-0 shadow-lg gap-6">
+        
+        <!-- Bloque 1: Título y Clases (Apilados) -->
+        <div class="flex flex-col justify-between items-start gap-2 shrink-0">
+            <h2 class="text-xl xl:text-2xl text-blue-400 pixel-font">LAN/WAN SIMULATOR</h2>
+            <select id="class-selector" class="bg-slate-900 border border-slate-600 text-yellow-400 font-bold text-sm xl:text-base rounded-lg focus:ring-blue-500 block px-4 py-2 cursor-pointer outline-none shadow-inner w-full">
                 <option value="C" selected>🔴 Clase C (Red Casera)</option>
                 <option value="B">🟡 Clase B (Empresas medias)</option>
                 <option value="A">🟢 Clase A (Masivas)</option>
             </select>
         </div>
-        <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700">
-            <span class="text-xs font-bold text-slate-300 uppercase tracking-widest">🔍 Escala UI (Zoom):</span>
-            <input type="range" id="font-zoom" min="12" max="28" value="18" class="w-32">
-            <span id="zoom-val" class="text-xs font-mono text-yellow-400">18px</span>
+
+        <!-- Bloque 2: LEYENDA DEL MITO (Centro, GIGANTE y claro) -->
+        <div class="flex-1 bg-slate-900/90 border-2 border-orange-500/40 p-3 rounded-xl shadow-[inset_0_0_15px_rgba(249,115,22,0.1)] flex items-center justify-center">
+            <p class="text-sm xl:text-base text-orange-100 leading-snug text-center">
+                <strong class="text-orange-400 text-base xl:text-lg uppercase tracking-wider block mb-1">⚠️ El Mito de la Máscara Destino</strong> 
+                ¿Qué pasa con el prefijo de la IP Destino? ¡Nada! Tu computadora <strong>no sabe ni le importa</strong> la máscara real del destino. Para decidir si es LAN o WAN, tu PC simplemente le "impone" temporalmente su propia máscara (<strong class="text-emerald-400 text-lg">/<span id="info-current-mask">24</span></strong>) a la IP Destino para compararlas equitativamente.
+            </p>
+        </div>
+
+        <!-- Bloque 3: Escala UI (Apilado y compacto) -->
+        <div class="flex flex-col justify-center items-end gap-2 bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-600 shadow-inner shrink-0">
+            <span class="text-xs xl:text-sm font-bold text-slate-300 uppercase tracking-widest">🔍 Escala UI (Zoom):</span>
+            <div class="flex items-center gap-3">
+                <input type="range" id="font-zoom" min="14" max="28" value="19" class="w-32 xl:w-40">
+                <span id="zoom-val" class="text-sm xl:text-base font-mono text-yellow-400 font-bold w-12 text-right">19px</span>
+            </div>
         </div>
     </header>
 
-    <!-- GRID PRINCIPAL (Layout Monitor) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-grow min-h-0">
+    <!-- LAYOUT FLEX (28% Izquierda Fija, 72% Derecha Fluida, Gap súper delgado) -->
+    <div class="flex flex-col xl:flex-row gap-3 flex-grow min-h-0">
         
-        <!-- COLUMNA IZQUIERDA: Configuración y Dashboard -->
-        <div class="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scroll pr-2">
+        <!-- PANEL IZQUIERDO: 28% -->
+        <div class="w-full xl:w-[28%] flex-shrink-0 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scroll pr-1">
             
-            <!-- PANEL DE ENTRADA COMPARATIVO -->
             <section class="glass-card p-4">
-                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-700 pb-2 text-center">Matriz de Enrutamiento</h3>
+                <h3 class="text-lg font-bold text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-700 pb-2 text-center">Matriz Origen/Destino</h3>
                 
-                <!-- Grid alinedo perfectamente Origen/Destino -->
-                <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr] gap-x-2 gap-y-4 items-center justify-items-center bg-slate-900/50 p-3 rounded-lg border border-slate-700">
-                    <div class="text-right text-xs font-bold text-blue-400 pr-2 w-full">ORIGEN<br><span class="text-[9px] text-slate-500 font-normal">Quien envía</span></div>
+                <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr] gap-x-2 gap-y-6 items-center justify-items-center bg-slate-900/60 p-4 rounded-xl border border-slate-700 shadow-inner">
+                    <div class="text-right text-base font-black text-blue-400 pr-2 w-full leading-tight">ORIGEN<br><span class="text-xs text-slate-500 font-normal">Quien envía</span></div>
                     <input type="number" id="ip-oct-0" class="ip-input" value="192" min="0" max="255">
                     <input type="number" id="ip-oct-1" class="ip-input" value="168" min="0" max="255">
                     <input type="number" id="ip-oct-2" class="ip-input" value="1" min="0" max="255">
                     <input type="number" id="ip-oct-3" class="ip-input" value="50" min="0" max="255">
                     
-                    <div class="text-right text-xs font-bold text-orange-400 pr-2 w-full">DESTINO<br><span class="text-[9px] text-slate-500 font-normal">A dónde va</span></div>
+                    <div class="text-right text-base font-black text-orange-400 pr-2 w-full leading-tight">DESTINO<br><span class="text-xs text-slate-500 font-normal">A dónde va</span></div>
                     <input type="number" id="dest-oct-0" class="ip-input ip-input-dest" value="192" min="0" max="255">
                     <input type="number" id="dest-oct-1" class="ip-input ip-input-dest" value="168" min="0" max="255">
                     <input type="number" id="dest-oct-2" class="ip-input ip-input-dest" value="1" min="0" max="255">
                     <input type="number" id="dest-oct-3" class="ip-input ip-input-dest" value="200" min="0" max="255">
                 </div>
 
-                <!-- Slider Máscara -->
-                <div class="mt-5 bg-emerald-900/10 p-3 rounded-lg border border-emerald-900/50">
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-xs font-bold text-emerald-400 uppercase">Máscara de Red (Origen)</span>
-                        <span class="text-xl font-bold pixel-font text-emerald-400" id="display-cidr-src">/24</span>
+                <div class="mt-6 bg-emerald-900/20 p-4 rounded-xl border border-emerald-800/50 shadow-inner relative">
+                    <div class="flex justify-between items-end mb-3">
+                        <span class="text-base font-bold text-emerald-400 uppercase">Máscara Origen</span>
+                        <span class="text-4xl font-black pixel-font text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.8)]" id="display-cidr-src">/24</span>
                     </div>
                     <input type="range" id="slider-cidr-src" min="8" max="30" value="24" class="w-full">
+                    
+                    <!-- DETECTOR EN TIEMPO REAL: SUPERNETTING/SUBNETTING -->
+                    <div id="live-net-detector" class="mt-4 p-3 rounded-lg border text-center transition-colors duration-300">
+                        <div id="net-type-title" class="font-black uppercase tracking-widest text-sm">Cargando...</div>
+                        <div id="net-type-desc" class="text-xs mt-1 font-medium"></div>
+                    </div>
                 </div>
                 
-                <button id="btn-animate" class="w-full mt-5 pixel-font bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl text-sm shadow-[0_0_15px_rgba(147,51,234,0.6)] active:scale-95 transition-all border-b-4 border-purple-800">EJECUTAR BITWISE AND</button>
+                <button id="btn-animate" class="w-full mt-6 pixel-font bg-purple-600 hover:bg-purple-500 text-white py-5 rounded-xl text-lg shadow-[0_0_20px_rgba(147,51,234,0.6)] active:scale-95 transition-all border-b-4 border-purple-800 tracking-wider">EJECUTAR AND</button>
             </section>
 
-            <!-- DASHBOARD DE RESULTADOS (Se revela al calcular) -->
+            <!-- DASHBOARD DE RESULTADOS (Se revela después de animar) -->
             <div id="results-dashboard" class="hidden flex-col gap-4">
-                <!-- DECISIÓN LAN/WAN -->
-                <div id="dashboard-decision" class="p-4 rounded-xl text-center border transition-all duration-500 shadow-lg">
-                    <div class="text-4xl mb-2" id="decision-icon">🏠</div>
-                    <h2 class="text-xl font-bold uppercase tracking-wider" id="decision-title">Misma Red (LAN)</h2>
-                    <p class="text-xs mt-2 opacity-90" id="decision-desc">Tu PC asume que hablan directo.</p>
+                <div id="dashboard-decision" class="p-6 rounded-xl text-center border transition-all duration-500 shadow-xl">
+                    <div class="text-6xl mb-4" id="decision-icon">🏠</div>
+                    <h2 class="text-2xl font-black uppercase tracking-wider" id="decision-title">Misma Red (LAN)</h2>
+                    <p class="text-base mt-3 opacity-90 leading-relaxed font-bold" id="decision-desc">Tu PC asume que hablan directo.</p>
                 </div>
 
-                <!-- ESTADÍSTICAS RÁPIDAS -->
-                <div class="grid grid-cols-2 p-3 gap-3 bg-slate-900/80 rounded-xl border border-slate-700 shadow-xl">
-                    <div class="bg-slate-800/50 p-2 rounded text-center border border-slate-700">
-                        <div class="text-[10px] text-slate-400 uppercase">Tu Subred</div>
-                        <div class="font-bold text-yellow-400 text-sm" id="res-subnet-index">#1 de 1</div>
+                <div class="grid grid-cols-2 p-4 gap-4 bg-slate-900/80 rounded-xl border border-slate-700 shadow-xl">
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">Tu Subred</div>
+                        <div class="font-black text-yellow-400 text-lg" id="res-subnet-index">#1 de 1</div>
                     </div>
-                    <div class="bg-slate-800/50 p-2 rounded text-center border border-slate-700">
-                        <div class="text-[10px] text-slate-400 uppercase">IPs Útiles</div>
-                        <div class="font-bold text-emerald-400 text-sm" id="res-hosts">254</div>
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">IPs Útiles</div>
+                        <div class="font-black text-emerald-400 text-lg" id="res-hosts">254</div>
                     </div>
-                    <div class="bg-slate-800/50 p-2 rounded text-center border border-slate-700">
-                        <div class="text-[10px] text-slate-400 uppercase">IP de Red</div>
-                        <div class="font-bold text-purple-400 text-sm" id="res-net">192.168.1.0</div>
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 col-span-2">
+                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">IP de Red Origen</div>
+                        <div class="font-black text-purple-400 text-2xl tracking-widest" id="res-net">192.168.1.0</div>
                     </div>
-                    <div class="bg-slate-800/50 p-2 rounded text-center border border-slate-700">
-                        <div class="text-[10px] text-slate-400 uppercase">Broadcast</div>
-                        <div class="font-bold text-red-400 text-sm" id="res-broadcast">192.168.1.255</div>
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 col-span-2">
+                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">Broadcast Origen</div>
+                        <div class="font-black text-red-400 text-2xl tracking-widest" id="res-broadcast">192.168.1.255</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: Visualizador Binario y Matemáticas -->
-        <div class="lg:col-span-8 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scroll pr-2">
+        <!-- PANEL DERECHO: 72% Visualizador y Fórmulas -->
+        <div class="flex-1 min-w-0 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scroll pr-2 pb-5">
             
-            <!-- VISUALIZADOR BINARIO MASIVO -->
-            <section class="glass-card p-4 flex flex-col items-center relative overflow-hidden" id="visualizer-container">
-                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-700 pb-2 w-full text-center">Motor Bitwise AND</h3>
+            <!-- VISUALIZADOR BINARIO GIGANTE -->
+            <section class="glass-card p-6 flex flex-col relative" id="visualizer-container">
+                <h3 class="text-xl font-black text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-700 pb-3 w-full text-center">Motor Bitwise AND Global</h3>
                 
-                <div class="w-full flex flex-col gap-2 relative z-10">
+                <div class="w-full flex flex-col gap-3 relative z-10">
                     <!-- Fila 1: Origen -->
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-24 text-right text-[10px] text-blue-400 font-bold uppercase leading-tight shrink-0">IP Origen<br><span class="text-slate-500 font-normal">(Binario)</span></div>
+                    <div class="flex items-center gap-4 xl:gap-6">
+                        <div class="w-36 text-right text-lg text-blue-400 font-black uppercase leading-tight shrink-0">IP Origen<br><span class="text-slate-500 font-bold text-xs">(Binario)</span></div>
                         <div id="bin-ip" class="binary-row"></div>
                     </div>
+                    
                     <!-- Fila 2: Destino -->
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-24 text-right text-[10px] text-orange-400 font-bold uppercase leading-tight shrink-0">IP Destino<br><span class="text-slate-500 font-normal">(Binario)</span></div>
+                    <div class="flex items-center gap-4 xl:gap-6">
+                        <div class="w-36 text-right text-lg text-orange-400 font-black uppercase leading-tight shrink-0">IP Destino<br><span class="text-slate-500 font-bold text-xs">(Binario)</span></div>
                         <div id="bin-dest" class="binary-row"></div>
                     </div>
                     
-                    <div class="w-full h-px bg-slate-700 my-1"></div>
+                    <div class="w-full h-[2px] bg-slate-700/50 my-2 rounded-full"></div>
                     
-                    <!-- Fila 3: MÁSCARA (Aplica a ambos) -->
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-24 text-right text-[10px] text-emerald-400 font-bold uppercase leading-tight shrink-0">Máscara<br><span class="text-slate-500 font-normal">(El Filtro)</span></div>
-                        <div id="bin-mask" class="binary-row"></div>
+                    <!-- Fila 3: MÁSCARA (Base 10 gigante encima del binario) -->
+                    <div class="flex items-center gap-4 xl:gap-6 bg-emerald-900/10 rounded-xl p-3 border border-emerald-900/40 relative">
+                        <div class="w-36 text-right text-lg text-emerald-400 font-black uppercase leading-tight shrink-0 pt-6">Máscara<br><span class="text-emerald-600/80 font-bold text-xs">(El Filtro)</span></div>
+                        <div id="bin-mask" class="binary-row items-end"></div>
                     </div>
                     
-                    <div class="w-full h-px bg-slate-700 my-1"></div>
+                    <div class="w-full h-[2px] bg-slate-700/50 my-2 rounded-full"></div>
                     
                     <!-- Fila 4: Red Origen Resultante -->
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-24 text-right text-[10px] text-purple-400 font-bold uppercase leading-tight shrink-0">Red Origen<br><span class="text-slate-500 font-normal">(Tu red real)</span></div>
+                    <div class="flex items-center gap-4 xl:gap-6">
+                        <div class="w-36 text-right text-lg text-purple-400 font-black uppercase leading-tight shrink-0">Red Origen<br><span class="text-slate-500 font-bold text-xs">(Tu red real)</span></div>
                         <div id="bin-result" class="binary-row"></div>
                     </div>
+                    
                     <!-- Fila 5: Red Destino Resultante -->
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-24 text-right text-[10px] text-pink-400 font-bold uppercase leading-tight shrink-0">Red Destino<br><span class="text-slate-500 font-normal">(Percibida)</span></div>
+                    <div class="flex items-center gap-4 xl:gap-6">
+                        <div class="w-36 text-right text-lg text-pink-400 font-black uppercase leading-tight shrink-0">Red Destino<br><span class="text-slate-500 font-bold text-xs">(Percibida)</span></div>
                         <div id="bin-dest-result" class="binary-row"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- EXPLICACIONES Y SUBREDES -->
-            <section id="math-section" class="hidden glass-card p-4">
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <!-- Bloque Mágico Matemático -->
-                    <div class="bg-gradient-to-br from-indigo-900/40 to-slate-800/40 border border-indigo-500/30 p-4 rounded-xl relative">
-                        <div class="absolute top-0 right-0 bg-indigo-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg uppercase">Análisis Matemático</div>
-                        <h3 class="font-bold text-indigo-300 mb-4 text-sm flex items-center gap-2"><span class="text-xl">🧙‍♂️</span> Construyendo el "Número Mágico"</h3>
-                        <div id="magic-trick-steps" class="space-y-4 text-sm text-slate-200"></div>
+            <!-- EXPLICACIONES (PASO A PASO) Y SUBREDES -->
+            <section id="math-section" class="hidden glass-card p-6">
+                <div class="grid grid-cols-1 2xl:grid-cols-2 gap-8">
+                    <!-- Bloque Mágico Matemático (Paso a Paso) -->
+                    <div class="bg-gradient-to-br from-indigo-900/40 to-slate-800/40 border border-indigo-500/40 p-6 rounded-2xl relative shadow-lg">
+                        <div class="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-black px-4 py-2 rounded-bl-xl uppercase tracking-wider">Análisis Matemático</div>
+                        <h3 class="font-black text-indigo-300 mb-6 text-xl flex items-center gap-3 border-b border-indigo-500/30 pb-4"><span class="text-3xl">🧙‍♂️</span> Construyendo el "Número Mágico" (Paso a Paso)</h3>
+                        <div id="magic-trick-steps" class="space-y-6 text-lg text-slate-200"></div>
                     </div>
                     
                     <!-- Lista de Subredes generadas -->
-                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700" id="subnet-list-container">
+                    <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-600 shadow-lg" id="subnet-list-container">
                     </div>
                 </div>
             </section>
@@ -224,7 +248,7 @@
 </main>
 
 <script>
-    // Configuración inicial de Audio
+    // Audio
     let synth, dropSynth, successSynth, tickSynth;
     let audioInitialized = false;
 
@@ -243,10 +267,8 @@
     function playFilterAnimation() { if(audioInitialized) { const now = Tone.now(); dropSynth.triggerAttackRelease("C5", "16n", now); dropSynth.triggerAttackRelease("G4", "16n", now + 0.1); dropSynth.triggerAttackRelease("C4", "8n", now + 0.2); } }
     function playResultMagic() { if(audioInitialized) successSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", Tone.now()); }
 
-    // Estado centralizado
     let state = { ip: [192, 168, 1, 50], ipDest: [192, 168, 1, 200], cidrSrc: 24, isFiltered: false };
 
-    // Funciones Matemáticas
     function dec2bin(dec) { return (dec >>> 0).toString(2).padStart(8, '0'); }
     function ipToInt(ipArr) { return (ipArr[0] << 24 | ipArr[1] << 16 | ipArr[2] << 8 | ipArr[3]) >>> 0; }
     function intToIp(int) { return [ (int >>> 24) & 255, (int >>> 16) & 255, (int >>> 8) & 255, int & 255 ]; }
@@ -296,18 +318,19 @@
         return { maskSrc, netIdSrc, broadcastSrc, hosts, netClass, isLan, subnetIndex, totalSubnets, netIdDestPerceivedBySrc, borrowedBits };
     }
 
-    // Elementos del DOM
     const els = {
         btnStart: document.getElementById('btn-start'), screenStart: document.getElementById('start-screen'),
         mainApp: document.getElementById('main-app'), classSelector: document.getElementById('class-selector'),
         sliderCidrSrc: document.getElementById('slider-cidr-src'), displayCidrSrc: document.getElementById('display-cidr-src'),
         zoomSlider: document.getElementById('font-zoom'), zoomVal: document.getElementById('zoom-val'),
         
-        // Binarios
+        // Panel en tiempo real y Leyenda del Mito
+        liveNetDetector: document.getElementById('live-net-detector'), netTypeTitle: document.getElementById('net-type-title'), netTypeDesc: document.getElementById('net-type-desc'),
+        infoCurrentMask: document.getElementById('info-current-mask'),
+        
         binIp: document.getElementById('bin-ip'), binDest: document.getElementById('bin-dest'), 
         binMask: document.getElementById('bin-mask'), binResult: document.getElementById('bin-result'), binDestResult: document.getElementById('bin-dest-result'),
         
-        // Controles y Dashboards
         btnAnimate: document.getElementById('btn-animate'), resultsDash: document.getElementById('results-dashboard'), mathSection: document.getElementById('math-section'),
         resNet: document.getElementById('res-net'), resBroadcast: document.getElementById('res-broadcast'),
         resHosts: document.getElementById('res-hosts'), resSubnetIndex: document.getElementById('res-subnet-index'),
@@ -315,12 +338,10 @@
         decTitle: document.getElementById('decision-title'), decDesc: document.getElementById('decision-desc'),
         magicSteps: document.getElementById('magic-trick-steps'), subnetContainer: document.getElementById('subnet-list-container'),
         
-        // Inputs
         ipInputs: [ document.getElementById('ip-oct-0'), document.getElementById('ip-oct-1'), document.getElementById('ip-oct-2'), document.getElementById('ip-oct-3') ],
         destInputs: [ document.getElementById('dest-oct-0'), document.getElementById('dest-oct-1'), document.getElementById('dest-oct-2'), document.getElementById('dest-oct-3') ]
     };
 
-    // Zoom Controller
     els.zoomSlider.addEventListener('input', (e) => {
         document.documentElement.style.setProperty('--app-font-size', e.target.value + 'px');
         els.zoomVal.innerText = e.target.value + 'px';
@@ -332,17 +353,47 @@
         els.sliderCidrSrc.value = state.cidrSrc;
     }
 
-    // Renderizador Binario Universal
+    // Actualiza la alerta holográfica debajo del slider y la nota del encabezado de inmediato
+    function updateLiveNetDetector(info) {
+        els.infoCurrentMask.innerText = state.cidrSrc; // Actualiza el texto en el encabezado
+        const diff = info.borrowedBits; // positivo=Subnetting, negativo=Supernetting
+        
+        if (diff > 0) {
+            els.liveNetDetector.className = "mt-4 p-3 rounded-xl border-2 text-center transition-colors duration-300 bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.3)]";
+            els.netTypeTitle.innerText = "🛠️ SUBNETTING (División)";
+            els.netTypeDesc.innerText = `Estás robando ${diff} bit(s) de host para dividir la ${info.netClass.name} en redes más pequeñas.`;
+        } else if (diff < 0) {
+            els.liveNetDetector.className = "mt-4 p-3 rounded-xl border-2 text-center transition-colors duration-300 bg-yellow-900/30 border-yellow-500 text-yellow-300 shadow-[0_0_15px_rgba(234,179,8,0.3)]";
+            els.netTypeTitle.innerText = "🌐 SUPERNETTING (Fusión)";
+            els.netTypeDesc.innerText = `Estás robando ${Math.abs(diff)} bit(s) de red para agrupar redes completas en una sola gigante.`;
+        } else {
+            els.liveNetDetector.className = "mt-4 p-3 rounded-xl border text-center transition-colors duration-300 bg-slate-800/50 border-slate-600 text-slate-400";
+            els.netTypeTitle.innerText = "✓ MÁSCARA POR DEFECTO";
+            els.netTypeDesc.innerText = `Máscara natural de la ${info.netClass.name}. No hay división ni fusión de subredes.`;
+        }
+    }
+
     function renderBinaryDisplay(container, octets, type) {
         container.innerHTML = ''; let globalBitIndex = 0; const bitValues = [128, 64, 32, 16, 8, 4, 2, 1];
         octets.forEach((octet, octetIdx) => {
-            const binStr = dec2bin(octet); const wrapper = document.createElement('div'); wrapper.className = 'octet-wrapper';
-            if (type === 'ip') {
+            const binStr = dec2bin(octet); 
+            const wrapper = document.createElement('div'); 
+            wrapper.className = 'octet-wrapper relative';
+            
+            if (type === 'mask') {
+                const decValDiv = document.createElement('div');
+                decValDiv.className = 'w-full text-center text-emerald-300 font-black text-3xl xl:text-4xl mb-2 tracking-widest drop-shadow-[0_0_12px_rgba(52,211,153,0.9)]';
+                decValDiv.innerText = octet;
+                wrapper.appendChild(decValDiv);
+            }
+
+            if (type === 'ip' && container.id === 'bin-ip') {
                 const headerRow = document.createElement('div'); headerRow.className = 'bit-headers';
                 bitValues.forEach(num => { const span = document.createElement('span'); span.innerText = num; headerRow.appendChild(span); });
                 wrapper.appendChild(headerRow);
             }
-            const group = document.createElement('div'); group.className = 'octet-group';
+
+            const group = document.createElement('div'); group.className = 'octet-group shadow-md';
             for (let i = 0; i < 8; i++) {
                 const bitValue = binStr[i]; const box = document.createElement('div');
                 if (type === 'ip' && container.id === 'bin-ip') {
@@ -352,15 +403,15 @@
                         state.ip[octetIdx] = bitValue === '1' ? currentDec - valToToggle : currentDec + valToToggle;
                         syncIpInputs(); state.isFiltered = false; playSwitchTick(); refreshUI();
                     };
-                } else if (type === 'ip') { // Para dest
-                    box.className = `bit-box ${bitValue === '1' ? 'bg-orange-600/80 text-white' : 'bg-slate-800 text-slate-500'} border border-slate-700`; box.innerText = bitValue;
+                } else if (type === 'ip') { 
+                    box.className = `bit-box ${bitValue === '1' ? 'bg-orange-600 text-white shadow-[0_0_10px_rgba(234,88,12,0.6)] border-orange-500 border-b-[3px] border-b-orange-800' : 'bg-slate-800 text-slate-500'} border border-slate-700`; box.innerText = bitValue;
                 } else if (type === 'mask') { 
                     box.className = `bit-box ${bitValue === '1' ? 'bit-mask-1' : 'bit-mask-0'}`; box.innerText = bitValue; 
                 } else if (type === 'result') {
                     if (!state.isFiltered) { box.className = 'bit-box bit-unknown'; box.innerText = '?'; } 
                     else { 
                         const isNetBit = globalBitIndex < state.cidrSrc; 
-                        const bgClass = container.id === 'bin-dest-result' && isNetBit ? 'bg-pink-600 text-white border border-pink-400 box-shadow-[0_0_8px_#db2777]' : (isNetBit ? 'bit-result-net' : 'bit-result-host');
+                        const bgClass = container.id === 'bin-dest-result' && isNetBit ? 'bg-pink-600 text-white border-pink-400 shadow-[0_0_12px_#db2777] border-b-[3px] border-b-pink-800' : (isNetBit ? 'bit-result-net' : 'bit-result-host');
                         box.className = `bit-box ${bgClass}`; box.innerText = bitValue; 
                     }
                 }
@@ -378,25 +429,25 @@
         let totalIps = Math.pow(2, hostBits);
         let usefulIps = totalIps - 2;
 
-        let subnetText = info.borrowedBits > 0 ? `Subredes creadas: 2<sup>${info.borrowedBits}</sup> = <span class="text-blue-300 font-bold">${info.totalSubnets}</span> totales.` :
-                         info.borrowedBits === 0 ? `<span class="text-blue-300">Estás usando la máscara por defecto. Red única.</span>` :
-                         `<span class="text-yellow-400">Estás haciendo Supernetting (Fusionando).</span>`;
+        let subnetText = info.borrowedBits > 0 ? `2<sup>${info.borrowedBits}</sup> = <span class="text-blue-300 font-bold">${info.totalSubnets} subredes</span>` :
+                         info.borrowedBits === 0 ? `<span class="text-blue-300">Máscara por defecto. Red única.</span>` :
+                         `<span class="text-yellow-400">Supernetting activo (Fusión)</span>`;
 
         let html = `
-            <div class="mb-4">
-                <h3 class="font-bold text-emerald-400 text-sm mb-2">Diseño y Capacidad</h3>
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="bg-slate-800/80 p-2 rounded border border-emerald-600/50">
-                        <div class="text-[10px] text-slate-400">Dispositivos: 32 bits - /${state.cidrSrc} = ${hostBits} bits host</div>
-                        <div class="text-sm font-bold text-emerald-300">2<sup>${hostBits}</sup> - 2 = ${usefulIps} IPs Útiles</div>
+            <div class="mb-6">
+                <h3 class="font-black text-emerald-400 text-xl mb-4 border-b border-emerald-900 pb-2">Diseño y Capacidad</h3>
+                <div class="grid grid-cols-2 gap-5 mb-5">
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-emerald-600/50 shadow-inner">
+                        <div class="text-sm font-bold text-slate-400 mb-2">32 bits - /${state.cidrSrc} = ${hostBits} bits host</div>
+                        <div class="text-xl font-black text-emerald-300">2<sup>${hostBits}</sup> - 2 = <span class="text-white">${usefulIps}</span> IPs Útiles</div>
                     </div>
-                    <div class="bg-slate-800/80 p-2 rounded border border-blue-600/50">
-                        <div class="text-[10px] text-slate-400">División de Red</div>
-                        <div class="text-xs text-slate-300 mt-1">${subnetText}</div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-blue-600/50 shadow-inner flex flex-col justify-center">
+                        <div class="text-sm font-bold text-slate-400 mb-2">División de Red</div>
+                        <div class="text-lg font-bold text-slate-300">${subnetText}</div>
                     </div>
                 </div>
             </div>
-            <div class="space-y-2">
+            <div class="space-y-5">
         `;
 
         let maxSteps = Math.floor(256 / magicNum);
@@ -405,7 +456,7 @@
 
         displayIndices.forEach((idx, iterPos) => {
             if (iterPos > 0 && displayIndices[iterPos] - displayIndices[iterPos-1] > 1) {
-                html += `<div class="text-center text-slate-600 font-bold py-1 text-[10px]">... saltando subredes ...</div>`;
+                html += `<div class="text-center text-slate-600 font-black py-2 text-sm uppercase tracking-widest">... saltando subredes intermedias ...</div>`;
             }
             let currentVal = idx * magicNum; let nextVal = currentVal + magicNum;
             let net = [...baseIp]; net[interestingIdx] = currentVal;
@@ -414,20 +465,23 @@
             let first = [...net]; first[3]++;
             let last = [...bcast]; last[3]--;
 
-            const hl = (arr) => arr.map((v, i) => i === interestingIdx ? `<span class="highlight-octet">${v}</span>` : v).join('.');
+            const hl = (arr) => arr.map((v, i) => i === interestingIdx ? `<span class="highlight-octet bg-yellow-900/40 text-yellow-300 border border-yellow-500/50">${v}</span>` : v).join('.');
             const isUserSubnet = state.ip[interestingIdx] >= currentVal && state.ip[interestingIdx] < nextVal;
 
             html += `
-                <div class="bg-slate-800/60 p-2 rounded-lg border ${isUserSubnet ? 'border-purple-500 bg-purple-900/40' : 'border-slate-700'} text-xs">
-                    <div class="font-bold text-blue-300 mb-1 flex justify-between items-center border-b border-slate-700 pb-1">
-                        <span>${info.borrowedBits > 0 ? `Subred #${idx + 1}` : `Red`}</span>
-                        ${isUserSubnet ? '<span class="text-[8px] bg-purple-600 text-white px-2 py-0.5 rounded shadow uppercase">Tu Origen</span>' : ''}
+                <div class="bg-slate-800/60 p-5 rounded-2xl border-2 ${isUserSubnet ? 'border-purple-500 bg-purple-900/30 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : 'border-slate-700'} text-base">
+                    <div class="font-black text-blue-300 mb-3 flex justify-between items-center border-b border-slate-700/50 pb-3">
+                        <span class="text-2xl">${info.borrowedBits > 0 ? `Subred #${idx + 1}` : `Red Global`}</span>
+                        ${isUserSubnet ? '<span class="text-sm bg-purple-600 text-white px-4 py-1.5 rounded-lg shadow uppercase tracking-widest font-black">Tu IP Origen</span>' : ''}
                     </div>
-                    <div class="grid grid-cols-2 gap-2 text-[10px]">
-                        <div><span class="text-slate-400">ID Red:</span> <span class="font-mono text-purple-300">${hl(net)}</span></div>
-                        <div><span class="text-slate-400">Bcast:</span> <span class="font-mono text-red-300">${hl(bcast)}</span></div>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div class="flex flex-col"><span class="text-slate-500 font-black uppercase mb-1 tracking-wider text-sm">ID Red:</span> <span class="font-mono text-purple-300 font-bold text-xl">${hl(net)}</span></div>
+                        <div class="flex flex-col"><span class="text-slate-500 font-black uppercase mb-1 tracking-wider text-sm">Broadcast:</span> <span class="font-mono text-red-300 font-bold text-xl">${hl(bcast)}</span></div>
                     </div>
-                    ${isUserSubnet ? `<div class="mt-1 text-[9px] text-emerald-400">Rango útil: ${hl(first)} - ${hl(last)}</div>` : ''}
+                    ${isUserSubnet ? `
+                    <div class="mt-6 bg-slate-900 p-4 rounded-xl text-center font-mono border-2 border-emerald-700/80 shadow-[inset_0_0_15px_rgba(4,120,87,0.4)]">
+                        <span class="text-emerald-400 font-black text-xl xl:text-2xl drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]">Rango útil: ${hl(first)} <span class="text-slate-500 mx-2">↔</span> ${hl(last)}</span>
+                    </div>` : ''}
                 </div>
             `;
         });
@@ -435,42 +489,56 @@
     }
 
     function renderMentalTrick(info) {
-        let interestingIdx = -1;
-        for(let i=0; i<4; i++) { if(info.maskSrc[i] >= 0 && info.maskSrc[i] < 255) { interestingIdx = i; break; } }
-        if (state.cidrSrc % 8 === 0 && state.cidrSrc < 32) { interestingIdx = (state.cidrSrc / 8) - 1; } 
+        let interestingIdx = Math.floor(state.cidrSrc / 8);
+        if (interestingIdx === 4) interestingIdx = 3; 
         
-        if (interestingIdx === -1 || state.cidrSrc === 32) {
-            els.magicSteps.innerHTML = `<div class="bg-blue-900/30 p-2 rounded border border-blue-500/30 text-sm">Máscara completa (/32). Host route único.</div>`;
+        const ordinal = ["Primer", "Segundo", "Tercer", "Cuarto"];
+        
+        if (state.cidrSrc === 32) {
+            els.magicSteps.innerHTML = `<div class="bg-blue-900/30 p-5 rounded-xl border border-blue-500/30 text-xl font-bold text-blue-300">Máscara completa (/32). Host route único. No existen subredes que calcular.</div>`;
             els.subnetContainer.innerHTML = ''; return;
         }
 
-        const maskVal = info.maskSrc[interestingIdx]; const ipVal = state.ip[interestingIdx]; const magicNum = 256 - maskVal;
+        const maskVal = info.maskSrc[interestingIdx]; 
+        const ipVal = state.ip[interestingIdx]; 
+        const magicNum = 256 - maskVal;
+        
         let baseNet = 0; let multiSequence = [];
         for(let i = 0; i <= 256/magicNum; i++) {
-            let val = magicNum * i; if(val <= ipVal) { baseNet = val; multiSequence.push(val); } else if(multiSequence.length < 4) { multiSequence.push(val); break; }
+            let val = magicNum * i; if(val <= ipVal) { baseNet = val; multiSequence.push(val); } else if(multiSequence.length < 5) { multiSequence.push(val); break; }
         }
 
         els.magicSteps.innerHTML = `
-            <div class="flex gap-2 items-start text-xs">
-                <div class="bg-indigo-600 text-white rounded w-5 h-5 flex items-center justify-center font-bold shrink-0 shadow-lg">1</div>
-                <div>Encuentra el octeto de la máscara que no es 255 ni 0. Aquí es el <strong>Octeto ${interestingIdx + 1}</strong> (Valor: ${maskVal}).</div>
+            <div class="flex gap-5 items-start">
+                <div class="bg-indigo-600 text-white rounded-lg w-10 h-10 flex items-center justify-center font-black text-xl shrink-0 shadow-lg mt-1">1</div>
+                <div><p class="font-black text-indigo-200 text-lg">Localiza la "Frontera" (El octeto interesante).</p>
+                <p class="text-base text-slate-400 mt-2">Como tu máscara es /${state.cidrSrc}, el salto de subredes sucede en el <strong>${ordinal[interestingIdx]} octeto</strong> (Cuyo valor en la máscara es <strong class="text-emerald-400 text-lg">${maskVal}</strong>).</p></div>
             </div>
-            <div class="flex gap-2 items-start text-xs">
-                <div class="bg-indigo-600 text-white rounded w-5 h-5 flex items-center justify-center font-bold shrink-0 shadow-lg">2</div>
-                <div>Número Mágico: <code class="bg-slate-900 px-1 rounded text-yellow-300 font-bold border border-slate-700">256 - ${maskVal} = ${magicNum}</code></div>
+            <div class="flex gap-5 items-start mt-2">
+                <div class="bg-indigo-600 text-white rounded-lg w-10 h-10 flex items-center justify-center font-black text-xl shrink-0 shadow-lg mt-1">2</div>
+                <div><p class="font-black text-indigo-200 text-lg">Calcula el Número Mágico (Tamaño del bloque).</p>
+                <div class="bg-slate-900 px-4 py-3 mt-3 inline-block rounded-xl text-yellow-300 font-bold border border-slate-700 shadow-inner text-xl">256 - ${maskVal} = <span class="text-4xl font-black ml-2 drop-shadow-[0_0_8px_rgba(253,224,71,0.5)]">${magicNum}</span></div></div>
             </div>
-            <div class="flex gap-2 items-start text-xs">
-                <div class="bg-indigo-600 text-white rounded w-5 h-5 flex items-center justify-center font-bold shrink-0 shadow-lg">3</div>
-                <div>Múltiplos de ${magicNum} que no superen tu IP origen (${ipVal}):<br>
-                <span class="font-mono mt-1 block">${multiSequence.map(v => v === baseNet ? `<code class="bg-purple-900 px-1 rounded text-purple-200 font-bold">${v}</code>` : v).join(', ')}...</span></div>
+            <div class="flex gap-5 items-start mt-2">
+                <div class="bg-indigo-600 text-white rounded-lg w-10 h-10 flex items-center justify-center font-black text-xl shrink-0 shadow-lg mt-1">3</div>
+                <div><p class="font-black text-indigo-200 text-lg">Multiplica hasta acercarte a tu IP (${ipVal}).</p>
+                <p class="text-base text-slate-400 mt-2">Ve saltando de <strong class="text-yellow-400">${magicNum} en ${magicNum}</strong> sin pasarte de tu Origen.</p>
+                <div class="font-mono mt-4 text-xl flex flex-wrap gap-3 items-center text-slate-500">
+                ${multiSequence.map(v => v === baseNet ? `<span class="bg-purple-600 px-3 py-1.5 rounded-lg text-white font-black shadow-lg ring-2 ring-purple-400 text-2xl">${v}</span>` : `<span class="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 font-bold">${v}</span>`).join('<span class="text-slate-600 font-black">→</span>')} <span class="text-lg">...</span>
+                </div>
+                <p class="text-sm text-purple-400 mt-5 font-black uppercase tracking-widest bg-purple-900/30 p-2 rounded inline-block border border-purple-800">¡El múltiplo ${baseNet} es tu ID de Red principal!</p></div>
             </div>
         `;
         renderSubnetList(info, interestingIdx, magicNum);
     }
 
+    // El refreshUI actualiza los componentes estáticos SIEMPRE (Slider, inputs, detector Sub/Super)
     function refreshUI() {
         const info = calculateNetwork(); 
+        
+        // 1. Siempre actualizamos las etiquetas estáticas
         els.displayCidrSrc.innerText = `/${state.cidrSrc}`;
+        updateLiveNetDetector(info);
         
         let classValue = info.netClass.name.split(' ')[1];
         if (classValue === 'D/E') classValue = 'D';
@@ -482,6 +550,7 @@
         renderBinaryDisplay(els.binResult, info.netIdSrc, 'result');
         renderBinaryDisplay(els.binDestResult, info.netIdDestPerceivedBySrc, 'result');
         
+        // 2. Si el usuario ya ejecutó la animación, mostramos resultados
         if (state.isFiltered) { 
             els.resultsDash.classList.remove('hidden'); els.resultsDash.classList.add('flex');
             els.mathSection.classList.remove('hidden'); 
@@ -495,32 +564,32 @@
             else els.resSubnetIndex.innerText = `Supernet`;
 
             if(info.isLan) {
-                els.dashDecision.className = "p-4 rounded-xl text-center border transition-all duration-500 shadow-lg bg-emerald-900/30 border-emerald-500/50 text-emerald-300";
+                els.dashDecision.className = "p-6 rounded-xl text-center border transition-all duration-500 shadow-xl bg-emerald-900/30 border-emerald-500/50 text-emerald-300";
                 els.decIcon.innerText = "🏠 LAN (Local)";
                 els.decTitle.innerText = "¡Misma Red! Hablan Directo";
-                els.decDesc.innerHTML = `Tu PC aplicó la máscara (<strong>/${state.cidrSrc}</strong>) al destino y dio <strong class="text-white">${info.netIdDestPerceivedBySrc.join('.')}</strong>. Como ES IGUAL a tu red (<strong class="text-white">${info.netIdSrc.join('.')}</strong>), envía los paquetes directo al Switch local.`;
+                els.decDesc.innerHTML = `Tu PC aplicó la máscara (<strong>/${state.cidrSrc}</strong>) al destino y dio <strong class="text-white text-lg">${info.netIdDestPerceivedBySrc.join('.')}</strong>. Como ES IDÉNTICO a tu red (<strong class="text-white text-lg">${info.netIdSrc.join('.')}</strong>), envía los paquetes directo al Switch local.`;
             } else {
-                els.dashDecision.className = "p-4 rounded-xl text-center border transition-all duration-500 shadow-lg bg-orange-900/30 border-orange-500/50 text-orange-300";
+                els.dashDecision.className = "p-6 rounded-xl text-center border transition-all duration-500 shadow-xl bg-orange-900/30 border-orange-500/50 text-orange-300";
                 els.decIcon.innerText = "🌍 WAN (Externa)";
                 els.decTitle.innerText = "Redes Diferentes (Router)";
-                els.decDesc.innerHTML = `El destino pertenece a la red <strong class="text-white">${info.netIdDestPerceivedBySrc.join('.')}</strong>. Como NO ES IGUAL a tu red (<strong class="text-white">${info.netIdSrc.join('.')}</strong>), tu PC le mandará el paquete a la Puerta de Enlace (Router) para que lo saque a Internet.`;
+                els.decDesc.innerHTML = `El destino pertenece a la red <strong class="text-white text-lg">${info.netIdDestPerceivedBySrc.join('.')}</strong>. Como NO ES IGUAL a tu red (<strong class="text-white text-lg">${info.netIdSrc.join('.')}</strong>), tu PC mandará el paquete a la Puerta de Enlace (Router) para salir a Internet.`;
             }
 
             renderMentalTrick(info); 
         } else { 
+            // Ocultamos hasta que el usuario decida Filtrar
             els.resultsDash.classList.add('hidden'); els.resultsDash.classList.remove('flex');
             els.mathSection.classList.add('hidden'); 
         }
     }
 
     function executeFilterAnimation() {
-        if (!audioInitialized) initAudio(); state.isFiltered = false; refreshUI(); els.btnAnimate.disabled = true; els.btnAnimate.innerHTML = 'Decidiendo Ruta...'; playFilterAnimation();
+        if (!audioInitialized) initAudio(); state.isFiltered = false; refreshUI(); els.btnAnimate.disabled = true; els.btnAnimate.innerHTML = 'EJECUTANDO AND...'; playFilterAnimation();
         const maskBoxes = els.binMask.querySelectorAll('.bit-box');
         maskBoxes.forEach((box, i) => { box.style.animation = 'none'; void box.offsetWidth; box.style.animation = `dropFilter 0.4s ease-out forwards`; box.style.animationDelay = `${i * 10}ms`; });
         setTimeout(() => {
             state.isFiltered = true; refreshUI(); playResultMagic();
             
-            // Animar Resultados Origen
             const resultBoxes = els.binResult.querySelectorAll('.bit-box');
             resultBoxes.forEach((box, i) => {
                 box.style.transform = 'scale(0.5)'; box.style.opacity = '0';
@@ -530,7 +599,6 @@
                 }, i * 15);
             });
 
-            // Animar Resultados Destino
             const destBoxes = els.binDestResult.querySelectorAll('.bit-box');
             destBoxes.forEach((box, i) => {
                 box.style.transform = 'scale(0.5)'; box.style.opacity = '0';
@@ -540,19 +608,14 @@
                 }, i * 15);
             });
 
-            setTimeout(() => { els.btnAnimate.disabled = false; els.btnAnimate.innerHTML = `RECALCULAR NUEVA RUTA`; }, 600);
+            setTimeout(() => { els.btnAnimate.disabled = false; els.btnAnimate.innerHTML = `RECALCULAR RUTAS`; }, 600);
         }, 500);
     }
 
-    // Inicializadores de Eventos
     els.btnStart.addEventListener('click', async () => { 
-        await initAudio(); 
-        els.screenStart.style.opacity = '0'; 
+        await initAudio(); els.screenStart.style.opacity = '0'; 
         setTimeout(() => { 
-            els.screenStart.style.display = 'none'; 
-            els.mainApp.classList.remove('hidden'); els.mainApp.classList.add('flex');
-            els.mainApp.style.animation = 'dropFilter 0.5s ease-out forwards'; 
-            refreshUI(); 
+            els.screenStart.style.display = 'none'; els.mainApp.classList.remove('hidden'); els.mainApp.classList.add('flex'); els.mainApp.style.animation = 'dropFilter 0.5s ease-out forwards'; refreshUI(); 
         }, 300); 
     });
     
@@ -565,7 +628,7 @@
     });
 
     els.sliderCidrSrc.addEventListener('input', (e) => { state.cidrSrc = parseInt(e.target.value); state.isFiltered = false; playTick(); refreshUI(); });
-    els.btnAnimate.addEventListener('click', () => { if(state.isFiltered) { state.isFiltered = false; playTick(); refreshUI(); els.btnAnimate.innerHTML = `EJECUTAR BITWISE AND`; } else { executeFilterAnimation(); } });
+    els.btnAnimate.addEventListener('click', () => { if(state.isFiltered) { state.isFiltered = false; playTick(); refreshUI(); els.btnAnimate.innerHTML = `EJECUTAR AND`; } else { executeFilterAnimation(); } });
     
     els.ipInputs.forEach((input, index) => {
         input.addEventListener('change', (e) => {
