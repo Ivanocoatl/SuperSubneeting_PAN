@@ -109,7 +109,7 @@
         <div class="flex flex-col justify-center items-end gap-2 bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-600 shadow-inner shrink-0">
             <span class="text-xs xl:text-sm font-bold text-slate-300 uppercase tracking-widest">🔍 Escala UI (Zoom):</span>
             <div class="flex items-center gap-3">
-                <input type="range" id="font-zoom" min="14" max="28" value="19" class="w-32 xl:w-40">
+                <input type="range" id="font-zoom" min="12" max="26" value="19" class="w-32 xl:w-40">
                 <span id="zoom-val" class="text-sm xl:text-base font-mono text-yellow-400 font-bold w-12 text-right">19px</span>
             </div>
         </div>
@@ -163,20 +163,24 @@
                     <p class="text-base mt-3 opacity-90 leading-relaxed font-bold" id="decision-desc">Tu PC asume que hablan directo.</p>
                 </div>
 
-                <div class="grid grid-cols-2 p-4 gap-4 bg-slate-900/80 rounded-xl border border-slate-700 shadow-xl">
-                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700">
-                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">Tu Subred</div>
-                        <div class="font-black text-yellow-400 text-lg" id="res-subnet-index">#1 de 1</div>
+                <div class="grid grid-cols-3 p-4 gap-4 bg-slate-900/80 rounded-xl border border-slate-700 shadow-xl">
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 flex flex-col justify-center">
+                        <div class="text-[10px] xl:text-xs text-slate-400 uppercase font-bold mb-1 leading-tight">Tu Subred</div>
+                        <div class="font-black text-yellow-400 text-base xl:text-lg" id="res-subnet-index">#1</div>
                     </div>
-                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700">
-                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">IPs Útiles</div>
-                        <div class="font-black text-emerald-400 text-lg" id="res-hosts">254</div>
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 flex flex-col justify-center">
+                        <div class="text-[10px] xl:text-xs text-slate-400 uppercase font-bold mb-1 leading-tight">Red Destino</div>
+                        <div class="font-black text-orange-400 text-base xl:text-lg" id="res-dest-subnet-index">#1</div>
                     </div>
-                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 col-span-2">
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 flex flex-col justify-center">
+                        <div class="text-[10px] xl:text-xs text-slate-400 uppercase font-bold mb-1 leading-tight">IPs Útiles</div>
+                        <div class="font-black text-emerald-400 text-base xl:text-lg" id="res-hosts">254</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 col-span-3">
                         <div class="text-xs text-slate-400 uppercase font-bold mb-1">IP de Red Origen</div>
                         <div class="font-black text-purple-400 text-2xl tracking-widest" id="res-net">192.168.1.0</div>
                     </div>
-                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 col-span-2">
+                    <div class="bg-slate-800/80 p-3 rounded-lg text-center border border-slate-700 col-span-3">
                         <div class="text-xs text-slate-400 uppercase font-bold mb-1">Broadcast Origen</div>
                         <div class="font-black text-red-400 text-2xl tracking-widest" id="res-broadcast">192.168.1.255</div>
                     </div>
@@ -190,8 +194,8 @@
             <!-- VISUALIZADOR BINARIO GIGANTE -->
             <section class="glass-card p-6 flex flex-col relative" id="visualizer-container">
                 <h3 class="text-xl font-black text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-700 pb-3 w-full text-center">Motor Bitwise AND Global</h3>
-                
-                <div class="w-full flex flex-col gap-3 relative z-10">
+
+                <div class="w-full flex flex-col gap-3 relative z-10 mt-2">
                     <!-- Fila 1: Origen -->
                     <div class="flex items-center gap-4 xl:gap-6">
                         <div class="w-36 text-right text-lg text-blue-400 font-black uppercase leading-tight shrink-0">IP Origen<br><span class="text-slate-500 font-bold text-xs">(Binario)</span></div>
@@ -309,13 +313,20 @@
         let totalSubnets = borrowedBits > 0 ? Math.pow(2, borrowedBits) : 1;
         
         let subnetIndex = 1;
+        let destSubnetIndex = 1;
         if (borrowedBits > 0) {
+            // Calcula subred para Origen
             const ipInt = ipToInt(state.ip);
             const extractedBits = (ipInt >>> (32 - state.cidrSrc)) & ((1 << borrowedBits) - 1);
             subnetIndex = extractedBits + 1;
+            
+            // Calcula subred para Destino
+            const ipDestInt = ipToInt(state.ipDest);
+            const extractedDestBits = (ipDestInt >>> (32 - state.cidrSrc)) & ((1 << borrowedBits) - 1);
+            destSubnetIndex = extractedDestBits + 1;
         }
 
-        return { maskSrc, netIdSrc, broadcastSrc, hosts, netClass, isLan, subnetIndex, totalSubnets, netIdDestPerceivedBySrc, borrowedBits };
+        return { maskSrc, netIdSrc, broadcastSrc, hosts, netClass, isLan, subnetIndex, destSubnetIndex, totalSubnets, netIdDestPerceivedBySrc, borrowedBits };
     }
 
     const els = {
@@ -334,6 +345,7 @@
         btnAnimate: document.getElementById('btn-animate'), resultsDash: document.getElementById('results-dashboard'), mathSection: document.getElementById('math-section'),
         resNet: document.getElementById('res-net'), resBroadcast: document.getElementById('res-broadcast'),
         resHosts: document.getElementById('res-hosts'), resSubnetIndex: document.getElementById('res-subnet-index'),
+        resDestSubnetIndex: document.getElementById('res-dest-subnet-index'), // Nuevo elemento DOM
         dashDecision: document.getElementById('dashboard-decision'), decIcon: document.getElementById('decision-icon'),
         decTitle: document.getElementById('decision-title'), decDesc: document.getElementById('decision-desc'),
         magicSteps: document.getElementById('magic-trick-steps'), subnetContainer: document.getElementById('subnet-list-container'),
@@ -559,9 +571,16 @@
             els.resBroadcast.innerText = info.broadcastSrc.join('.');
             els.resHosts.innerText = info.hosts;
             
-            if (info.borrowedBits > 0) els.resSubnetIndex.innerText = `#${info.subnetIndex}`;
-            else if (info.borrowedBits === 0) els.resSubnetIndex.innerText = `Red Única`;
-            else els.resSubnetIndex.innerText = `Supernet`;
+            if (info.borrowedBits > 0) {
+                els.resSubnetIndex.innerText = `#${info.subnetIndex}`;
+                els.resDestSubnetIndex.innerText = `#${info.destSubnetIndex}`;
+            } else if (info.borrowedBits === 0) {
+                els.resSubnetIndex.innerText = `Red Única`;
+                els.resDestSubnetIndex.innerText = `Red Única`;
+            } else {
+                els.resSubnetIndex.innerText = `Supernet`;
+                els.resDestSubnetIndex.innerText = `Supernet`;
+            }
 
             if(info.isLan) {
                 els.dashDecision.className = "p-6 rounded-xl text-center border transition-all duration-500 shadow-xl bg-emerald-900/30 border-emerald-500/50 text-emerald-300";
